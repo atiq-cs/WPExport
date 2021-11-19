@@ -16,6 +16,7 @@ namespace Goodbye.WordPress
         string Title,
         ImmutableList<string> Categories,
         ImmutableList<string> Tags,
+        string AuthorName,
         string Content,
         ImmutableList<string> RedirectFrom,
         ImmutableList<PostResource> Resources);

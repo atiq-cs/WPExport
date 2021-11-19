@@ -116,6 +116,7 @@ namespace Goodbye.WordPress
                         GROUP_CONCAT(DISTINCT t.name SEPARATOR ';'),
                         'NULL'
                     ) AS Tags,
+                    authors.display_name AS AuthorName,
                     p.post_content AS Content
                 FROM wp_posts p
                 LEFT JOIN wp_term_relationships cr
@@ -132,6 +133,8 @@ namespace Goodbye.WordPress
                         AND tt.taxonomy = 'post_tag')
                 LEFT JOIN wp_terms t
                     ON (tt.term_id = t.term_id)
+                LEFT JOIN wp_users authors
+                    ON p.post_author = authors.ID
                 WHERE
                     p.post_type = 'post'
                 GROUP BY p.id
@@ -179,6 +182,7 @@ namespace Goodbye.WordPress
                         .Split(";")
                         .Select(t => t.Trim().ToLowerInvariant())
                         .ToImmutableList(),
+                    reader.GetString("AuthorName").Trim(),
                     reader.GetString("Content"),
                     originalUrl is null
                         ? ImmutableList<string>.Empty

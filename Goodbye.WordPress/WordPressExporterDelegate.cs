@@ -249,6 +249,11 @@ namespace Goodbye.WordPress
                 .Union(post.Categories)
                 .Where(ct => ct != "null" && ct != "uncategorized");
 
+            if (! string.IsNullOrEmpty(post.AuthorName))
+                finalTags = finalTags.Union(
+                    new List<string>() { post.AuthorName }
+                );
+
             if (finalTags.Count() == 0)
                 finalTags = new List<string>() { "untagged" };
 
