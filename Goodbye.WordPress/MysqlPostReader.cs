@@ -170,7 +170,6 @@ namespace Goodbye.WordPress
 
                 yield return new Post(
                     postId,
-                    reader.GetString("Status"),
                     publishedDate,
                     updatedDate,
                     postName,

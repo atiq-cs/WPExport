@@ -9,7 +9,6 @@ namespace Goodbye.WordPress
 {
     public sealed record Post(
         int Id,
-        string? Status,
         DateTimeOffset? Published,
         DateTimeOffset? Updated,
         string Name,

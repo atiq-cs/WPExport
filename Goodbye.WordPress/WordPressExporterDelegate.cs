@@ -264,14 +264,6 @@ namespace Goodbye.WordPress
                 )
             );
 
-            if (post.Status != "publish")
-                rootNode.Add("Excluded", "true");
-
-            if (!string.IsNullOrEmpty(post.Status))
-                rootNode.Add(
-                    nameof(Post.Status),
-                    post.Status);
-
             if (post.RedirectFrom.Count > 0)
             {
                 var redirects = post.RedirectFrom
