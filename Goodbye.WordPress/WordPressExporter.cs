@@ -87,6 +87,10 @@ namespace Goodbye.WordPress
         public async Task<WordPressExporter> ExportAsync(
             CancellationToken cancellationToken = default)
         {
+            Log.Logger = new LoggerConfiguration()
+                .WriteTo.Console()
+                .CreateLogger();
+
             Directory.CreateDirectory(ContentOutputDirectory);
             Directory.CreateDirectory(ImagesOutputDirectory);
 
