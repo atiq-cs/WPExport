@@ -43,7 +43,10 @@ namespace WPExportApp {
         StrPatterns = patterns;
     }
 
-    // Replace weird unicode chars
+    /// <summary>
+    /// Common substitutions
+    /// Replace weird unicode chars
+    /// </summary>
     private string SubstituteCommon(string str) =>
       str.Replace("‘", "'").Replace("’", "'")
         .Replace("“", "\"").Replace("”", "\"");
