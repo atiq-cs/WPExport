@@ -93,9 +93,15 @@ namespace WPExportApp {
         );
 
       System.Console.WriteLine("name: " + System.Net.WebUtility.UrlDecode(post.Name));
-      return System.IO.Path.Combine(
+      var postDirPath = System.IO.Path.Combine(
         exporter.ContentOutputDirectory,
-        $"{post.Published:yyyy-MM-dd}-{cleanPostName}");
+        $"{post.Published:yyyy}");
+
+      if (!System.IO.Directory.Exists(postDirPath))
+        System.IO.Directory.CreateDirectory(postDirPath);
+
+      return System.IO.Path.Combine(postDirPath,
+        $"{post.Published:MM-dd}-{cleanPostName}");
     }
 
     /// <summary>Process post contents</summary>
