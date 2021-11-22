@@ -49,11 +49,12 @@ namespace WPExportApp {
       public string TlsVersion { get; set; }
       public string ContentOutputDirectory { get; set; }
       public string ArchiveOutputFilePath { get; set; }
+
       /// <summary>
-      /// Some of the patterns might be internal only and should not be published online
-      /// Therefore, it might be good idea to keep them in the json config file.
+      /// Confidential patterns should not be published online
+      /// Therefore, it is good idea to keep them in json config file.
       /// </summary>
-      public ReplacePattern[] Patterns { get; set; }
+      public System.Collections.Generic.Dictionary<string, ReplacePattern[]> Patterns { get; set; }
     }
 
 

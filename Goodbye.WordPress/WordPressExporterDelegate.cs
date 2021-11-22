@@ -238,31 +238,8 @@ namespace Goodbye.WordPress
                         CultureInfo.InvariantCulture));
             }
 
-            if (!string.IsNullOrEmpty(post.Title))
-                rootNode.Add(nameof(Post.Title), post.Title);
-
             AddDateField(nameof(Post.Published), post.Published);
             AddDateField(nameof(Post.Updated), post.Updated);
-
-
-            var finalTags = post.Tags
-                .Union(post.Categories)
-                .Where(ct => ct != "null" && ct != "uncategorized");
-
-            if (! string.IsNullOrEmpty(post.AuthorName))
-                finalTags = finalTags.Union(
-                    new List<string>() { post.AuthorName }
-                );
-
-            if (finalTags.Count() == 0)
-                finalTags = new List<string>() { "untagged" };
-
-            rootNode.Add(
-                nameof(Post.Tags),
-                new YamlSequenceNode(
-                    finalTags.Select(tag => new YamlScalarNode(tag))
-                )
-            );
 
             if (post.RedirectFrom.Count > 0)
             {

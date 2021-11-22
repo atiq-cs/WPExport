@@ -1,6 +1,9 @@
 namespace WPExportApp {
   using System.Threading.Tasks;
   using Goodbye.WordPress;
+  using SharpYaml.Serialization;
+  using System.Collections.Generic;
+  using System.Linq;
 
   class WPExportMain {
     /// <summary>
@@ -36,34 +39,67 @@ namespace WPExportApp {
 
   sealed class CustomExporterDelegate : WordPressExporterDelegate
   {
-    JsonConfig.ReplacePattern[] StrPatterns;
+    private Dictionary<string, JsonConfig.ReplacePattern[]> PatternDict;
 
-    public CustomExporterDelegate(JsonConfig.ReplacePattern[] patterns)
-    {
-        StrPatterns = patterns;
+    public CustomExporterDelegate(Dictionary<string, JsonConfig.ReplacePattern[]> patterns) {
+      PatternDict = patterns;
     }
 
     /// <summary>
-    /// Common substitutions
     /// Replace weird unicode chars
     /// </summary>
-    private string SubstituteCommon(string str) =>
-      str.Replace("‘", "'").Replace("’", "'")
-        .Replace("“", "\"").Replace("”", "\"");
+    public string SubstituteCommon(string str) =>
+        str.Replace("‘", "'").Replace("’", "'")
+            .Replace("“", "\"").Replace("”", "\"");
 
+    /// <summary>
+    /// Substitutions for Content and Tag
+    /// </summary>
+    public string SubstituteInternal(string str, string type) {
+      if (! PatternDict.ContainsKey(type)) {
+        System.Console.WriteLine($"Json config patterns don't contain {type}!");
+        return str;
+      }
+
+      var patterns = PatternDict[type];
+
+      if (patterns != null && patterns.Length > 0)
+        foreach( var pattern in patterns)
+          str = str.Replace(pattern.Needle, pattern.Substitute);
+      else
+        System.Console.WriteLine("pattern empty!");
+
+      return str;
+    }
+
+    /// <summary>Process post content helper</summary>
     private string ProcessContent(string content) {
       content = SubstituteCommon(content)
         .Replace("http://", "https://");
-
-      if (StrPatterns != null && StrPatterns.Length > 0)
-        foreach( var pattern in StrPatterns)
-          content = content.Replace(pattern.Needle, pattern.Substitute);
       
-      return content;
+      return SubstituteInternal(content, "Content");
+    }
+
+    /// <summary>For cleaner URL, post.Name that is tail of URL</summary>
+    private string RemoveNonAlphaNumChars(string str)
+      => System.Text.RegularExpressions.Regex.Replace(str, "[^A-Za-z0-9-]", "");
+
+
+    public sealed override string GetOutputPath(
+      WordPressExporter exporter, Post post)
+    {
+      var cleanPostName = RemoveNonAlphaNumChars(
+          SubstituteInternal(SubstituteCommon(System.Net.WebUtility.UrlDecode(post.Name)), "Tag")
+        );
+
+      System.Console.WriteLine("name: " + System.Net.WebUtility.UrlDecode(post.Name));
+      return System.IO.Path.Combine(
+        exporter.ContentOutputDirectory,
+        $"{post.Published:yyyy-MM-dd}-{cleanPostName}");
     }
 
     /// <summary>Process post contents</summary>
-    public override Post ProcessPost(
+    public sealed override Post ProcessPost(
       WordPressExporter exporter,
       Post post)
     // Perform the default post processing first by calling base
@@ -72,14 +108,37 @@ namespace WPExportApp {
       Content = ProcessContent(post.Content)
     };
 
-    /// <summary>Add 'CustomMetadata' to each post's YAML front matter</summary>
-    public override void PopulatePostYamlFrontMatter(
+    /// <summary>Customize YAML front matter</summary>
+    public sealed override void PopulatePostYamlFrontMatter(
       WordPressExporter exporter,
       Post post,
       SharpYaml.Serialization.YamlMappingNode rootNode)
     {
+      if (!string.IsNullOrEmpty(post.Title))
+        rootNode.Add(nameof(Post.Title), SubstituteCommon(post.Title)
+          .Trim(new char[] {'"', '\'', ' '}).Replace(":", " -"));
+
+      var finalTags = post.Tags
+          .Union(post.Categories)
+          .Where(ct => ct != "null" && ct != "uncategorized");
+
+      if (! string.IsNullOrEmpty(post.AuthorName))
+          finalTags = finalTags.Union(
+              new List<string>() { post.AuthorName }
+          );
+
+      if (finalTags.Count() == 0)
+          finalTags = new List<string>() { "untagged" };
+
+      rootNode.Add(
+          nameof(Post.Tags),
+          new YamlSequenceNode(
+              finalTags.Select(tag => new YamlScalarNode(SubstituteInternal(
+                SubstituteCommon(tag), "Tag").Trim(new char[] {'"', '\'', ' '})))
+          )
+      );
+
       base.PopulatePostYamlFrontMatter(exporter, post, rootNode);
-      // rootNode.Add("CustomMetadata", "Some Value");
     }
   }
 }
